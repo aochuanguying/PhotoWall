@@ -1,0 +1,43 @@
+plugins { id 'com.android.application' }
+
+android {
+    // 【新】定义应用的命名空间，所有自动生成的代码（如 R 文件）都会在此包下
+    namespace 'com.hxfssc.activity'
+    compileSdkVersion 33
+
+    defaultConfig {
+        // 【新】定义应用的唯一ID，这是发布到应用市场的最终身份标识
+        applicationId "com.hxfssc.activity"
+        minSdkVersion 19
+        targetSdkVersion 33
+        versionCode 2
+        versionName "1.1"
+        
+        // 开启 MultiDex 以支持 API 19 (Android 4.4)
+        multiDexEnabled true
+    }
+    
+    compileOptions {
+        // 启用 Java 8 特性支持 (Lambda, Streams等)，兼容低版本安卓
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled false
+        }
+    }
+}
+
+dependencies {
+    // 用于访问SMB网络共享的第三方库
+    implementation 'eu.agno3.jcifs:jcifs-ng:2.1.9'
+    // MultiDex 库，Android 4.4 必备
+    implementation 'androidx.multidex:multidex:2.0.1'
+}

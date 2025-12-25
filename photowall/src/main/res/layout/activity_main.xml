@@ -1,0 +1,389 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <!-- 照片容器 (双缓冲用于交叉淡入淡出) -->
+    <ImageView
+        android:id="@+id/photo_view_1"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:visibility="invisible" />
+
+    <ImageView
+        android:id="@+id/photo_view_2"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:visibility="invisible" />
+
+    <!-- 信息/加载提示 -->
+    <TextView
+        android:id="@+id/info_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="#80000000"
+        android:padding="10dp"
+        android:text="正在初始化..."
+        android:textColor="#FFFFFF"
+        android:textSize="24sp"
+        android:visibility="visible" />
+
+    <!-- 菜单/设置覆盖层 -->
+    <!-- 刷新菜单 (新增) -->
+    <LinearLayout
+        android:id="@+id/refresh_menu_overlay"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="@drawable/bg_overlay"
+        android:orientation="vertical"
+        android:padding="30dp"
+        android:elevation="10dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="菜单"
+            android:textColor="#FFFFFF"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="20dp" />
+
+        <Button
+            android:id="@+id/btn_incremental_refresh"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:text="增量刷新"
+            android:background="@drawable/btn_primary"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:layout_marginBottom="15dp"
+            android:focusable="true"
+            android:clickable="true" />
+
+        <Button
+            android:id="@+id/btn_full_refresh"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:text="全量刷新"
+            android:background="@drawable/btn_secondary"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:layout_marginBottom="15dp"
+            android:focusable="true"
+            android:clickable="true" />
+
+        <Button
+            android:id="@+id/btn_open_settings"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:text="系统设置"
+            android:background="@drawable/btn_secondary"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:layout_marginBottom="15dp"
+            android:focusable="true"
+            android:clickable="true" />
+
+        <Button
+            android:id="@+id/btn_close_menu"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:text="退出菜单"
+            android:background="@drawable/btn_danger"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:focusable="true"
+            android:clickable="true" />
+    </LinearLayout>
+
+    <ScrollView
+        android:id="@+id/settings_overlay"
+        android:layout_width="450dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:background="@drawable/bg_overlay"
+        android:layout_margin="20dp"
+        android:elevation="10dp"
+        android:padding="25dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="50dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="PhotoWall 设置"
+                android:textColor="#FFFFFF"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                android:paddingBottom="30dp" />
+
+            <!-- 1. 数据源 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="1. 数据来源"
+                android:textColor="#34C759"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="15dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="30dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="类型: "
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp" />
+                <Spinner
+                    android:id="@+id/spinner_source_type"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/bg_input"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp" />
+            </LinearLayout>
+
+            <!-- 2. 连接配置 -->
+            <TextView
+                android:id="@+id/text_conn_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="2. 连接配置"
+                android:textColor="#34C759"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="15dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="30dp">
+
+                <LinearLayout
+                    android:id="@+id/container_smb_config"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <EditText
+                        android:id="@+id/input_host"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:hint="NAS IP地址 (例如 192.168.1.100)"
+                        android:textColor="#FFFFFF"
+                        android:textColorHint="#8E8E93"
+                        android:background="@drawable/bg_input"
+                        android:paddingStart="15dp"
+                        android:paddingEnd="15dp"
+                        android:textSize="16sp"
+                        android:singleLine="true"
+                        android:layout_marginBottom="15dp" />
+                    
+                    <EditText
+                        android:id="@+id/input_user"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:hint="用户名"
+                        android:textColor="#FFFFFF"
+                        android:textColorHint="#8E8E93"
+                        android:background="@drawable/bg_input"
+                        android:paddingStart="15dp"
+                        android:paddingEnd="15dp"
+                        android:textSize="16sp"
+                        android:singleLine="true"
+                        android:layout_marginBottom="15dp" />
+
+                    <EditText
+                        android:id="@+id/input_pass"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:hint="密码"
+                        android:inputType="textPassword"
+                        android:textColor="#FFFFFF"
+                        android:textColorHint="#8E8E93"
+                        android:background="@drawable/bg_input"
+                        android:paddingStart="15dp"
+                        android:paddingEnd="15dp"
+                        android:textSize="16sp"
+                        android:singleLine="true"
+                        android:layout_marginBottom="15dp" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btn_connect"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:text="测试连接 / 列出目录"
+                    android:background="@drawable/btn_primary"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp" />
+            </LinearLayout>
+
+            <!-- 3. 路径选择 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="3. 浏览路径"
+                android:textColor="#34C759"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="15dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_input"
+                android:padding="5dp"
+                android:layout_marginBottom="30dp">
+
+                <TextView
+                    android:id="@+id/text_current_path"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="photo/PhotoWall"
+                    android:textColor="#FF9F0A"
+                    android:textSize="14sp"
+                    android:padding="10dp"
+                    android:ellipsize="start"
+                    android:singleLine="true" />
+
+                <ScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="150dp"
+                    android:layout_marginTop="5dp">
+                    <LinearLayout
+                        android:id="@+id/dir_list_container"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="5dp">
+                        <TextView
+                            android:id="@+id/text_dir_status"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="请先连接服务器"
+                            android:textColor="#8E8E93"
+                            android:gravity="center"
+                            android:padding="20dp" />
+                    </LinearLayout>
+                </ScrollView>
+            </LinearLayout>
+
+            <!-- 4. 播放参数 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="4. 播放参数"
+                android:textColor="#34C759"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="15dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="30dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="15dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="切换间隔 (秒): "
+                        android:textColor="#FFFFFF"
+                        android:textSize="16sp" />
+                    <EditText
+                        android:id="@+id/input_interval"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:inputType="number"
+                        android:text="5"
+                        android:textColor="#FFFFFF"
+                        android:background="@drawable/bg_input"
+                        android:paddingStart="15dp"
+                        android:paddingEnd="15dp"
+                        android:textSize="16sp" />
+                </LinearLayout>
+                
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="展示风格: "
+                        android:textColor="#FFFFFF"
+                        android:textSize="16sp" />
+                    <Spinner
+                        android:id="@+id/spinner_style"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:background="@drawable/bg_input"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center">
+
+                <Button
+                    android:id="@+id/btn_save"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="50dp"
+                    android:background="@drawable/btn_success"
+                    android:text="保存并播放"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    android:layout_marginEnd="15dp"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true" />
+
+                <Button
+                    android:id="@+id/btn_exit"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="50dp"
+                    android:background="@drawable/btn_danger"
+                    android:text="退出设置"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+</FrameLayout>
