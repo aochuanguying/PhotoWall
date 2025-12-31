@@ -60,6 +60,17 @@ import jcifs.context.BaseContext;
 import jcifs.smb.NtlmPasswordAuthenticator;
 import jcifs.smb.SmbFile;
 
+/**
+ * MainActivity
+ * 
+ * Android TV PhotoWall 主程序
+ * 核心功能：
+ * 1. 支持 SMB (局域网共享) 和 本地存储 图片源
+ * 2. 双缓冲机制实现无缝图片切换
+ * 3. 多种展示风格：Ken Burns (平移缩放)、淡入淡出、滑动切换
+ * 4. 针对 Android TV 遥控器优化的交互 (Dialog 模式选择框)
+ * 5. 自动缓存管理与容错机制 (自动跳过损坏图片)
+ */
 public class MainActivity extends Activity {
 
     @Override
@@ -86,11 +97,15 @@ public class MainActivity extends Activity {
 
     // Settings UI
     private EditText inputHost, inputUser, inputPass, inputInterval;
-    private Spinner spinnerStyle, spinnerSourceType; // Add spinnerSourceType
-    private LinearLayout containerSmbConfig; // Add containerSmbConfig
-    private TextView textCurrentPath, textDirStatus, textConnTitle; // Add textConnTitle
+    private Button btnStyleSelect, btnSourceTypeSelect;
+    private LinearLayout containerSmbConfig;
+    private TextView textCurrentPath, textDirStatus, textConnTitle;
     private LinearLayout dirListContainer;
     private Button btnConnect, btnSave, btnExit;
+
+    // Data for Selection Dialogs
+    private final String[] styles = new String[]{"Ken Burns (推荐)", "仅淡入淡出", "滑动切换"};
+    private final String[] sourceTypes = new String[]{"SMB 网络共享", "本地存储"};
 
     // State
     private final ExecutorService executor = Executors.newFixedThreadPool(4);
@@ -190,10 +205,10 @@ public class MainActivity extends Activity {
         inputUser = findViewById(R.id.input_user);
         inputPass = findViewById(R.id.input_pass);
         inputInterval = findViewById(R.id.input_interval);
-        spinnerStyle = findViewById(R.id.spinner_style);
-        spinnerSourceType = findViewById(R.id.spinner_source_type); // New
-        containerSmbConfig = findViewById(R.id.container_smb_config); // New
-        textConnTitle = findViewById(R.id.text_conn_title); // New
+        btnStyleSelect = findViewById(R.id.btn_style_select);
+        btnSourceTypeSelect = findViewById(R.id.btn_source_type_select);
+        containerSmbConfig = findViewById(R.id.container_smb_config);
+        textConnTitle = findViewById(R.id.text_conn_title);
         
         textCurrentPath = findViewById(R.id.text_current_path);
         textDirStatus = findViewById(R.id.text_dir_status);
@@ -203,69 +218,44 @@ public class MainActivity extends Activity {
         btnSave = findViewById(R.id.btn_save);
         btnExit = findViewById(R.id.btn_exit);
         
-        // Init Source Type Spinner
-        String[] sourceTypes = new String[]{"SMB 网络共享", "本地存储"};
-        ArrayAdapter<String> sourceAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, sourceTypes) {
-            @Override
-            public View getView(int position, View convertView, android.view.ViewGroup parent) {
-                TextView view = (TextView) super.getView(position, convertView, parent);
-                view.setTextColor(0xFFFFFFFF);
-                view.setTextSize(16);
-                return view;
-            }
-            @Override
-            public View getDropDownView(int position, View convertView, android.view.ViewGroup parent) {
-                TextView view = (TextView) super.getDropDownView(position, convertView, parent);
-                view.setTextColor(0xFF000000);
-                view.setBackgroundColor(0xFFFFFFFF);
-                view.setTextSize(16);
-                view.setPadding(20, 20, 20, 20);
-                return view;
-            }
-        };
-        sourceAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerSourceType.setAdapter(sourceAdapter);
-        spinnerSourceType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (position == 0) {
-                    // SMB
-                    containerSmbConfig.setVisibility(View.VISIBLE);
-                    textConnTitle.setText("2. SMB 配置");
-                    btnConnect.setText("测试连接 / 列出目录");
-                } else {
-                    // Local
-                    containerSmbConfig.setVisibility(View.GONE);
-                    textConnTitle.setText("2. 本地配置 (无需额外设置)");
-                    btnConnect.setText("列出目录");
-                }
-            }
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
+        // Init Source Type Selection
+        btnSourceTypeSelect.setOnClickListener(v -> {
+            new android.app.AlertDialog.Builder(this)
+                .setTitle("选择数据来源")
+                .setSingleChoiceItems(sourceTypes, currentSourceType, (dialog, which) -> {
+                    currentSourceType = which;
+                    btnSourceTypeSelect.setText(sourceTypes[which]);
+                    
+                    // Update UI based on selection
+                    if (which == 0) {
+                        // SMB
+                        containerSmbConfig.setVisibility(View.VISIBLE);
+                        textConnTitle.setText("2. SMB 配置");
+                        btnConnect.setText("测试连接 / 列出目录");
+                    } else {
+                        // Local
+                        containerSmbConfig.setVisibility(View.GONE);
+                        textConnTitle.setText("2. 本地配置 (无需额外设置)");
+                        btnConnect.setText("列出目录");
+                    }
+                    dialog.dismiss();
+                })
+                .setNegativeButton("取消", null)
+                .show();
         });
 
-        // Init Spinner with Custom Adapter for better visibility
-        String[] styles = new String[]{"Ken Burns (推荐)", "仅淡入淡出", "滑动切换"};
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, styles) {
-            @Override
-            public View getView(int position, View convertView, android.view.ViewGroup parent) {
-                TextView view = (TextView) super.getView(position, convertView, parent);
-                view.setTextColor(0xFFFFFFFF); // White text
-                view.setTextSize(16);
-                return view;
-            }
-            @Override
-            public View getDropDownView(int position, View convertView, android.view.ViewGroup parent) {
-                TextView view = (TextView) super.getDropDownView(position, convertView, parent);
-                view.setTextColor(0xFF000000); // Black text in dropdown
-                view.setBackgroundColor(0xFFFFFFFF); // White background
-                view.setTextSize(16);
-                view.setPadding(20, 20, 20, 20);
-                return view;
-            }
-        };
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerStyle.setAdapter(adapter);
+        // Init Style Selection
+        btnStyleSelect.setOnClickListener(v -> {
+            new android.app.AlertDialog.Builder(this)
+                .setTitle("选择展示风格")
+                .setSingleChoiceItems(styles, currentStyle, (dialog, which) -> {
+                    currentStyle = which;
+                    btnStyleSelect.setText(styles[which]);
+                    dialog.dismiss();
+                })
+                .setNegativeButton("取消", null)
+                .show();
+        });
 
         activeView = photoView1;
         inactiveView = photoView2;
@@ -295,8 +285,11 @@ public class MainActivity extends Activity {
                 
                 // Source Type
                 currentSourceType = currentSettings.optInt("sourceType", 0);
-                if (currentSourceType >= 0 && currentSourceType < spinnerSourceType.getCount()) {
-                    spinnerSourceType.setSelection(currentSourceType);
+                if (currentSourceType >= 0 && currentSourceType < sourceTypes.length) {
+                    btnSourceTypeSelect.setText(sourceTypes[currentSourceType]);
+                } else {
+                    currentSourceType = 0;
+                    btnSourceTypeSelect.setText(sourceTypes[0]);
                 }
 
                 // 使用 optString 并提供默认值
@@ -332,8 +325,11 @@ public class MainActivity extends Activity {
                 
                 // 设置 Spinner 选中项
                 currentStyle = currentSettings.optInt("displayStyle", 0);
-                if (currentStyle >= 0 && currentStyle < spinnerStyle.getCount()) {
-                    spinnerStyle.setSelection(currentStyle);
+                if (currentStyle >= 0 && currentStyle < styles.length) {
+                    btnStyleSelect.setText(styles[currentStyle]);
+                } else {
+                    currentStyle = 0;
+                    btnStyleSelect.setText(styles[0]);
                 }
                 
                 startPhotoWall();
@@ -354,11 +350,19 @@ public class MainActivity extends Activity {
         inputPass.setText("");
         textCurrentPath.setText("photo/PhotoWall");
         inputInterval.setText("5");
-        spinnerStyle.setSelection(0);
-        spinnerSourceType.setSelection(0); // Default SMB
-        playbackInterval = 5000;
+        
         currentStyle = 0;
-        currentSourceType = 0;
+        btnStyleSelect.setText(styles[0]);
+        
+        currentSourceType = 0; // Default SMB
+        btnSourceTypeSelect.setText(sourceTypes[0]);
+        
+        playbackInterval = 5000;
+        
+        // Update visibility based on default (SMB)
+        containerSmbConfig.setVisibility(View.VISIBLE);
+        textConnTitle.setText("2. SMB 配置");
+        btnConnect.setText("测试连接 / 列出目录");
     }
 
     private void openSettings() {
@@ -415,13 +419,13 @@ public class MainActivity extends Activity {
     private void saveSettings() {
         try {
             JSONObject s = new JSONObject();
-            s.put("sourceType", spinnerSourceType.getSelectedItemPosition()); // Save source type
+            s.put("sourceType", currentSourceType); // Save source type
             s.put("smbHost", inputHost.getText().toString().trim());
             s.put("smbUser", inputUser.getText().toString().trim());
             s.put("smbPass", inputPass.getText().toString());
             s.put("smbPath", textCurrentPath.getText().toString());
             s.put("autoplayInterval", Integer.parseInt(inputInterval.getText().toString().trim()));
-            s.put("displayStyle", spinnerStyle.getSelectedItemPosition()); // Save display style
+            s.put("displayStyle", currentStyle); // Save display style
             
             getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
                     .edit()
@@ -429,14 +433,11 @@ public class MainActivity extends Activity {
                     .apply();
             
             currentSettings = s;
-            currentSourceType = spinnerSourceType.getSelectedItemPosition();
+            // currentSourceType and currentStyle are already updated by dialog selection
             
             // 确保更新内存中的变量，并转换单位（秒 -> 毫秒）
             int sec = s.optInt("autoplayInterval", 5); // 默认为 5 秒
             playbackInterval = sec * 1000L; 
-            
-            // 更新当前风格
-            currentStyle = spinnerStyle.getSelectedItemPosition();
             
             Toast.makeText(this, "设置已保存: " + sec + "秒", Toast.LENGTH_SHORT).show();
             closeSettings();
@@ -819,7 +820,7 @@ public class MainActivity extends Activity {
                 if (allPhotoFiles.isEmpty()) {
                     infoText.setText("目录为空");
                 } else {
-                    infoText.setText("发现 " + allPhotoFiles.size() + " 张照片，加载中...(0/" + allPhotoFiles.size() + ")");
+                    infoText.setText("发现 " + allPhotoFiles.size() + " 张照片，准备播放...");
                     preloadPhotos();
                 }
             });
@@ -831,6 +832,13 @@ public class MainActivity extends Activity {
         loadNextPhoto();
     }
 
+    /**
+     * 异步预加载图片
+     * 策略：
+     * - 维护一个较小的内存缓冲队列 (Max 3~5 张)，防止 OOM
+     * - 每次播放消耗一张后，自动补充下一张
+     * - 包含错误重试机制：如果加载失败，尝试跳过并加载下一张
+     */
     private synchronized void loadNextPhoto() {
         if (allPhotoFiles.isEmpty()) return;
         if (isLoading) return; // 防止并发加载
@@ -866,7 +874,7 @@ public class MainActivity extends Activity {
                         
                         // 更新进度提示
                         if (isInitialLoad) {
-                            infoText.setText("发现 " + allPhotoFiles.size() + " 张照片，加载中...(" + loadedBitmaps.size() + "/" + allPhotoFiles.size() + ")");
+                            infoText.setText("正在缓冲照片... (" + loadedBitmaps.size() + "/2)");
                         }
                         
                         // 缓冲至少 2 张才开始播放，展示加载过程
@@ -878,15 +886,18 @@ public class MainActivity extends Activity {
                         }
                     });
                 }
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 e.printStackTrace();
             } finally {
                 // 无论成功失败，必须重置标志位
                 handler.post(() -> {
                     isLoading = false;
                     // 如果还在初始化阶段且缓冲不足，继续加载下一张
-                    if (isInitialLoad && loadedBitmaps.size() < 2 && !allPhotoFiles.isEmpty()) {
-                        loadNextPhoto();
+                    // 或者如果正在播放但队列过低（说明加载失败了），也尝试继续加载
+                    if ((isInitialLoad && loadedBitmaps.size() < 2) || (isPlaying && loadedBitmaps.size() < 2)) {
+                         if (!allPhotoFiles.isEmpty()) {
+                             loadNextPhoto();
+                         }
                     }
                 });
             }
@@ -926,6 +937,13 @@ public class MainActivity extends Activity {
         }
     }
 
+    /**
+     * 从 SMB 网络加载图片
+     * 包含本地磁盘缓存逻辑：
+     * 1. 优先读取本地缓存 (cacheDir/thumbs)
+     * 2. 如果缓存读取失败（文件损坏），自动删除并重新下载
+     * 3. 下载时自动进行采样压缩 (Target 720p)，减少内存占用
+     */
     private Bitmap loadBitmapFromSmb(String fileName) {
         if (currentSettings == null) return null;
         String host = currentSettings.optString("smbHost");
@@ -942,8 +960,14 @@ public class MainActivity extends Activity {
 
             if (cacheFile.exists() && cacheFile.length() > 0) {
                 cacheFile.setLastModified(System.currentTimeMillis());
-                return BitmapFactory.decodeFile(cacheFile.getAbsolutePath());
-            } else {
+                Bitmap b = BitmapFactory.decodeFile(cacheFile.getAbsolutePath());
+                if (b != null) return b;
+                // If decode fails, delete corrupt file
+                cacheFile.delete();
+            }
+            
+            // If we are here, either cache didn't exist or was corrupt (and deleted)
+            {
                 CIFSContext context = new BaseContext(new PropertyConfiguration(System.getProperties()));
                 NtlmPasswordAuthenticator auth = new NtlmPasswordAuthenticator(null, user, pass);
                 SmbFile file = new SmbFile(smbUrl, context.withCredentials(auth));
@@ -974,17 +998,29 @@ public class MainActivity extends Activity {
                 if (bitmap != null) {
                     try (FileOutputStream out = new FileOutputStream(cacheFile)) {
                         bitmap.compress(Bitmap.CompressFormat.JPEG, 60, out);
+                    } catch (Exception e) {
+                        // Ignore cache write failure
                     }
                     return bitmap;
                 }
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             Log.e(TAG, "Load photo failed", e);
         }
         return null;
     }
 
-    // 修复 showNextPhoto 逻辑，确保自动播放
+    /**
+     * 核心播放逻辑：切换并显示下一张图片
+     * 实现步骤：
+     * 1. 检查缓冲队列，如果为空则尝试加载并等待
+     * 2. 取出下一张 Bitmap
+     * 3. 根据当前风格 (currentStyle) 构建 AnimatorSet 动画
+     *    - Ken Burns: 透明度渐变 + 随机平移/缩放
+     *    - Fade: 纯透明度渐变
+     *    - Slide: 左右平移动画
+     * 4. 启动动画并调度下一次播放
+     */
     private void showNextPhoto() {
         if (loadedBitmaps.isEmpty()) {
             // 如果没有缓存图片，尝试加载
@@ -1115,7 +1151,7 @@ public class MainActivity extends Activity {
     }
 
     private void listPath(String subPath) {
-        if (spinnerSourceType.getSelectedItemPosition() == 1) {
+        if (currentSourceType == 1) {
             listLocalPath(subPath);
         } else {
             listSmbPath(subPath);

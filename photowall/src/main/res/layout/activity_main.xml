@@ -152,13 +152,18 @@
                     android:text="类型: "
                     android:textColor="#FFFFFF"
                     android:textSize="16sp" />
-                <Spinner
-                    android:id="@+id/spinner_source_type"
+                <Button
+                    android:id="@+id/btn_source_type_select"
                     android:layout_width="match_parent"
                     android:layout_height="50dp"
                     android:background="@drawable/bg_input"
                     android:paddingStart="10dp"
-                    android:paddingEnd="10dp" />
+                    android:paddingEnd="10dp"
+                    android:text="SMB 网络共享"
+                    android:gravity="center_vertical|start"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    android:textAllCaps="false" />
             </LinearLayout>
 
             <!-- 2. 连接配置 -->
@@ -341,13 +346,18 @@
                         android:text="展示风格: "
                         android:textColor="#FFFFFF"
                         android:textSize="16sp" />
-                    <Spinner
-                        android:id="@+id/spinner_style"
+                    <Button
+                        android:id="@+id/btn_style_select"
                         android:layout_width="match_parent"
                         android:layout_height="50dp"
                         android:background="@drawable/bg_input"
                         android:paddingStart="10dp"
-                        android:paddingEnd="10dp" />
+                        android:paddingEnd="10dp"
+                        android:text="Ken Burns (推荐)"
+                        android:gravity="center_vertical|start"
+                        android:textColor="#FFFFFF"
+                        android:textSize="16sp"
+                        android:textAllCaps="false" />
                 </LinearLayout>
             </LinearLayout>
 
